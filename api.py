@@ -8,7 +8,7 @@ from decimal import Decimal
 
 app = bottle.Bottle()
 
-plugin = bottle_pymysql.Plugin(dbuser='root', dbpass='root', dbname='Students')
+plugin = bottle_pymysql.Plugin(dbuser='root', dbpass='root', dbname='students')
 app.install(plugin)
 
 # Serialize date objects to string
