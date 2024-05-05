@@ -4,10 +4,11 @@ from bottle_mysql import Plugin
 import bottle_pymysql
 import json
 from datetime import date
+from decimal import Decimal
 
 app = bottle.Bottle()
 
-plugin = bottle_pymysql.Plugin(dbuser='root', dbpass='root', dbname='students')
+plugin = bottle_pymysql.Plugin(dbuser='root', dbpass='root', dbname='Students')
 app.install(plugin)
 
 # Serialize date objects to string
@@ -15,6 +16,12 @@ def serialize_dates(data):
     if isinstance(data, date):
         return data.isoformat()
     raise TypeError ("Type %s not serializable" % type(data))
+
+class DecimalEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, Decimal):
+            return float(o)
+        return super(DecimalEncoder, self).default(o)
 
 # return all students
 @app.route('/student')
@@ -72,14 +79,15 @@ def add_student(pymydb):
         response.status = 500
         return {'error': 'Database operation failed'}
     
-@app.route('/statistics/studentperquarter/<year:int>')
-def get_student_per_quarter(pymydb, year):
+@app.route('/student/averageperquarter/<id:int>')
+def get_student_per_quarter(pymydb, id):
     try:
-        # Get the total number of students per quarter
-        pymydb.execute('SELECT QUARTER(`Date Of Birth`) AS Quarter, COUNT(*) AS Students FROM Students WHERE YEAR(`Date Of Birth`)= %s GROUP BY Quarter', (year,))
+        pymydb.execute('SELECT (Mathematics + `Computer Science` + Literature)/3.0 AS Average_Grade, Quarter, Year FROM Grades WHERE `Student ID` = %s GROUP BY Year, Quarter ORDER BY Year, Quarter;'
+                        , (id, ))
         result = pymydb.fetchall()
         if result:
-            return json.dumps({'students_per_quarter': result})
+            json_result = json.dumps({'student_per_quarter': result}, cls=DecimalEncoder)
+            return (json_result)
         else:
             response.status = 404
             return {'error': 'No students found for the year'}
@@ -90,18 +98,37 @@ def get_student_per_quarter(pymydb, year):
         response.status = 500
         return {'error': 'Database operation failed'}
     
-@app.route('/quarter')
-def get_quarters(pymydb):
+@app.route('/subject/averageperquarter/<subject>')
+def get_quarters(pymydb, subject):
     try:
-        # Get the list of quarters
-        pymydb.execute('SELECT DISTINCT QUARTER(`Date Of Birth`) AS Quarter FROM Students')
+        query = f'SELECT AVG(`{subject}`) AS Average_Grade, Quarter, Year FROM Grades GROUP BY Year, Quarter'
+        pymydb.execute(query)
         result = pymydb.fetchall()
         if result:
-            return json.dumps({'quarters': result})
+            json_result = json.dumps({'subject_per_quarter': result}, cls=DecimalEncoder)
+            return (json_result)
         else:
             response.status = 404
-            return {'error': 'No quarters found'}
+            return {'error': 'No subject found for the year'}
         
+    except Exception as e:
+        # Log error and return error message
+        print(f"Database error: {e}")
+        response.status = 500
+        return {'error': 'Database operation failed'}
+
+@app.route('/subject/averageperyearall/<year:int>/<quarter>')
+def get_averageperyearall(pymydb, year, quarter):
+    try:
+        query = 'SELECT AVG(Mathematics) AS Mathematics, AVG(`Computer Science`) AS `Computer Science`, AVG(Literature) AS Literature FROM Grades WHERE Year = %s AND Quarter = %s'
+        pymydb.execute(query, (year, quarter))
+        result = pymydb.fetchall()
+        if result:
+            json_result = json.dumps({'average_per_year_all': result}, cls=DecimalEncoder)
+            return (json_result)
+        else:
+            response.status = 404
+            return {'error': 'No subject found for the year'}
     except Exception as e:
         # Log error and return error message
         print(f"Database error: {e}")
