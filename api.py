@@ -85,7 +85,8 @@ def add_student(pymydb):
         print(f"Database error: {e}")
         response.status = 500
         return {'error': 'Database operation failed'}
-    
+
+# get student average grades
 @app.route('/student/averageperquarter/<id:int>')
 def get_student_per_quarter(pymydb, id):
     try:
@@ -104,7 +105,8 @@ def get_student_per_quarter(pymydb, id):
         print(f"Database error: {e}")
         response.status = 500
         return {'error': 'Database operation failed'}
-    
+
+# get subject average grades
 @app.route('/subject/averageperquarter/<subject>')
 def get_quarters(pymydb, subject):
     try:
@@ -124,6 +126,7 @@ def get_quarters(pymydb, subject):
         response.status = 500
         return {'error': 'Database operation failed'}
 
+# get average grades for all subjects
 @app.route('/subject/averageperyearall/<year:int>/<quarter>')
 def get_averageperyearall(pymydb, year, quarter):
     try:
@@ -141,7 +144,8 @@ def get_averageperyearall(pymydb, year, quarter):
         print(f"Database error: {e}")
         response.status = 500
         return {'error': 'Database operation failed'}
-    
+
+# get student grades
 @app.route('/student/grades/<id:int>')
 def get_student_grades(pymydb, id):
     try:
@@ -159,7 +163,8 @@ def get_student_grades(pymydb, id):
         print(f"Database error: {e}")
         response.status = 500
         return {'error': 'Database operation failed'}
-    
+
+# Add student grades
 @app.route('/student/grades', method='POST')
 def post_student_grades(pymydb):
     try:
@@ -180,7 +185,8 @@ def post_student_grades(pymydb):
         print(f"Database error: {e}")
         response.status = 500
         return {'error': 'Database operation failed'}
-    
+
+# Update student data   
 @app.route('/student/<id:int>', method='PUT')
 def update_student(pymydb, id):
     try:
@@ -200,7 +206,8 @@ def update_student(pymydb, id):
         print(f"Database error: {e}")
         response.status = 500
         return {'error': 'Database operation failed'}
-    
+
+# get student grades at a certain quarter and year
 @app.route('/student/grade/<id:int>/<year:int>/<quarter>')
 def getStudentsQuarter(pymydb, id, year, quarter):
     try:
@@ -218,7 +225,8 @@ def getStudentsQuarter(pymydb, id, year, quarter):
         print(f"Database error: {e}")
         response.status = 500
         return {'error': 'Database operation failed'}
-    
+
+# Update student grades at a certain quarter and year
 @app.route('/student/grade/<id:int>/<year:int>/<quarter>', method='PUT')
 def editGrade(pymydb, id, year, quarter):
     try:
