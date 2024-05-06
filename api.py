@@ -201,16 +201,34 @@ def update_student(pymydb, id):
         response.status = 500
         return {'error': 'Database operation failed'}
     
-@app.route('/student/grades/<id:int>', method='PUT')
-def update_grades(pymydb, id):
+@app.route('/student/grade/<id:int>/<year:int>/<quarter>')
+def getStudentsQuarter(pymydb, id, year, quarter):
+    try:
+        query = 'SELECT * FROM Grades WHERE `Student ID` = %s AND Year = %s AND Quarter = %s'
+        pymydb.execute(query, (id, year, quarter))
+        result = pymydb.fetchall()
+        if result:
+            json_result = json.dumps({'grades': result}, cls=DecimalEncoder)
+            return (json_result)
+        else:
+            response.status = 404
+            return {'error': 'No grades found for the student'}
+    except Exception as e:
+        # Log error and return error message
+        print(f"Database error: {e}")
+        response.status = 500
+        return {'error': 'Database operation failed'}
+    
+@app.route('/student/grade/<id:int>/<year:int>/<quarter>', method='PUT')
+def editGrade(pymydb, id, year, quarter):
     try:
         data = bottle.request.json
-        if data['Mathematics'] is None or data['Computer Science'] is None or data['Literature'] is None or data['Quarter'] is None or data['Year'] is None:
+        if data['Mathematics'] is None or data['Computer Science'] is None or data['Literature'] is None:
             response.status = 400
-            return {'error': 'Mathematics, Computer Science, Literature, Quarter and Year are required'}
+            return {'error': 'Mathematics, Computer Science and Literature are required'}
         
-        pymydb.execute('UPDATE Grades SET Mathematics=%s, `Computer Science`=%s, Literature=%s, Quarter=%s, Year=%s WHERE `Student ID`=%s'
-                    , (data['Mathematics'], data['Computer Science'], data['Literature'], data['Quarter'], data['Year'], id))
+        pymydb.execute('UPDATE Grades SET Mathematics=%s, `Computer Science`=%s, Literature=%s WHERE `Student ID`=%s AND Year=%s AND Quarter=%s'
+                    , (data['Mathematics'], data['Computer Science'], data['Literature'], id, year, quarter))
         
         response.status = 200
         return {'status': 'Grades updated successfully'}
@@ -220,6 +238,7 @@ def update_grades(pymydb, id):
         print(f"Database error: {e}")
         response.status = 500
         return {'error': 'Database operation failed'}
+
 
 # Run the application
 if __name__ == '__main__':
