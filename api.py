@@ -1,6 +1,5 @@
 import bottle
-from bottle import Bottle, run, response
-from bottle_mysql import Plugin
+from bottle import response
 import bottle_pymysql
 import json
 from datetime import date
@@ -22,6 +21,14 @@ class DecimalEncoder(json.JSONEncoder):
         if isinstance(o, Decimal):
             return float(o)
         return super(DecimalEncoder, self).default(o)
+    
+
+@app.route('/<path:path>', method=['OPTIONS'])
+def handle_options(path):
+    response.headers['Access-Control-Allow-Origin'] = 'http://localhost:4200'
+    response.headers['Access-Control-Allow-Methods'] = 'PUT, GET, POST, DELETE, OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'Origin, Accept, Content-Type, X-Requested-With, X-CSRF-Token'
+    return {}
 
 # return all students
 @app.route('/student')
