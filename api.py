@@ -142,6 +142,85 @@ def get_averageperyearall(pymydb, year, quarter):
         response.status = 500
         return {'error': 'Database operation failed'}
     
+@app.route('/student/grades/<id:int>')
+def get_student_grades(pymydb, id):
+    try:
+        query = 'SELECT * FROM Grades WHERE `Student ID` = %s'
+        pymydb.execute(query, (id,))
+        result = pymydb.fetchall()
+        if result:
+            json_result = json.dumps({'grades': result}, cls=DecimalEncoder)
+            return (json_result)
+        else:
+            response.status = 404
+            return {'error': 'No grades found for the student'}
+    except Exception as e:
+        # Log error and return error message
+        print(f"Database error: {e}")
+        response.status = 500
+        return {'error': 'Database operation failed'}
+    
+@app.route('/student/grades', method='POST')
+def post_student_grades(pymydb):
+    try:
+        data = bottle.request.json
+        for item in data:
+            if item['Student ID'] is None or item['Mathematics'] is None or item['Computer Science'] is None or item['Literature'] is None or item['Quarter'] is None or item['Year'] is None:
+                response.status = 400
+                return {'error': 'Student ID, Mathematics, Computer Science, Literature, Quarter and Year are required'}
+            
+            pymydb.execute('INSERT INTO Grades (`Student ID`, Mathematics, `Computer Science`, Literature, Quarter, Year) VALUES (%s, %s, %s, %s, %s, %s)'
+                        , (item['Student ID'], item['Mathematics'], item['Computer Science'], item['Literature'], item['Quarter'], item['Year']))
+            
+        response.status = 201
+        return {'status': 'Grades added successfully'}
+    
+    except Exception as e:
+        # Log error and return error message
+        print(f"Database error: {e}")
+        response.status = 500
+        return {'error': 'Database operation failed'}
+    
+@app.route('/student/<id:int>', method='PUT')
+def update_student(pymydb, id):
+    try:
+        data = bottle.request.json
+        if data['Student Name'] is None or data['Date Of Birth'] is None or data['Student Class'] is None:
+            response.status = 400
+            return {'error': 'Name ,DOB and Class are required'}
+        
+        pymydb.execute('UPDATE Students SET `Student Name`=%s, `Date Of Birth`=%s, `Student Class`=%s WHERE `Student ID`=%s'
+                    , (data['Student Name'], data['Date Of Birth'], data['Student Class'], id))
+        
+        response.status = 200
+        return {'status': 'Student updated successfully'}
+    
+    except Exception as e:
+        # Log error and return error message
+        print(f"Database error: {e}")
+        response.status = 500
+        return {'error': 'Database operation failed'}
+    
+@app.route('/student/grades/<id:int>', method='PUT')
+def update_grades(pymydb, id):
+    try:
+        data = bottle.request.json
+        if data['Mathematics'] is None or data['Computer Science'] is None or data['Literature'] is None or data['Quarter'] is None or data['Year'] is None:
+            response.status = 400
+            return {'error': 'Mathematics, Computer Science, Literature, Quarter and Year are required'}
+        
+        pymydb.execute('UPDATE Grades SET Mathematics=%s, `Computer Science`=%s, Literature=%s, Quarter=%s, Year=%s WHERE `Student ID`=%s'
+                    , (data['Mathematics'], data['Computer Science'], data['Literature'], data['Quarter'], data['Year'], id))
+        
+        response.status = 200
+        return {'status': 'Grades updated successfully'}
+    
+    except Exception as e:
+        # Log error and return error message
+        print(f"Database error: {e}")
+        response.status = 500
+        return {'error': 'Database operation failed'}
+
 # Run the application
 if __name__ == '__main__':
     app.run(host='localhost', port=8090, debug=True)
